@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>新年礼花</title>
+<style>
+/* 设置画布占满整个窗口 */
+body {
+margin: 0;
+padding: 0;
+overflow: hidden;
+}
+canvas {
+display: block;
+}
+.scrolling-text {
+position: absolute;
+top: 100%;
+left: 50%;
+transform: translateX(-50%);
+font-size: 24px;
+text-align: center;
+color: red;
+animation: scrollText 10s linear infinite;
+}
+ 
+    @keyframes scrollText {
+        0% {
+            top: 100%;
+        }
+        100% {
+            top: -100%;
+        }
+    }
+</style>
+</head>
+<body>
+<!-- 创建一个画布 -->
+<canvas id="fireworksCanvas"></canvas>
+<div class="scrolling-text">
+
+</div>
+ 
+<script>
+    // 获取canvas和context
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+    // 设置canvas宽高为窗口的宽高
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // 初始化烟花数组
+    let fireworks = [];
+ 
+    // 定义产生min到max之间的随机数的函数
+    function random(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+ 
+    // 定义烟花类
+    class Firework {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.particles = [];
+            this.exploded = false;
+            this.life = 0;
+            this.color = color;
+            this.explodeHeight = random(canvas.height * 0.3, canvas.height * 0.6);
+        }
+ 
+        // 更新烟花状态的方法
+        update() {
+            // 如果烟花还未爆炸，向上移动，并增加寿命
+            if (!this.exploded) {
+                this.y -= random(5, 10);
+                this.life += 1;
+                // 如果烟花达到或超过爆炸高度，爆炸
+                if (this.y <= this.explodeHeight) {
+                    this.explode();
+                }
+            } else {
+                // 如果烟花已经爆炸，更新和绘制粒子
+                this.particles.forEach((particle, index) => {
+                    particle.update();
+                    if (particle.life < 0) {
+                        this.particles.splice(index, 1);
+                    }
+                });
+            }
+        }
+ 
+        // 绘制烟花的方法
+        draw() {
+            if (!this.exploded) {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                this.particles.forEach((particle) => particle.draw());
+            }
+        }
+ 
+        // 烟花爆炸的方法
+        explode() {
+            this.exploded = true;
+            for (let i = 0; i < 100; i++) {
+                const angle = random(0, Math.PI * 2);
+                const speed = random(1, 4);
+                this.particles.push(new Particle(this.x, this.y, angle, speed, this.color));
+            }
+        }
+    }
+ 
+    // 定义粒子类
+    class Particle {
+        constructor(x, y, angle, speed, color) {
+            this.x = x;
+            this.y = y;
+            this.angle = angle;
+            this.speed = speed;
+            this.life = random(50, 100);
+            this.color = color;
+        }
+ 
+        // 更新粒子状态的方法
+        update() {
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed;
+            this.speed *= 0.99;
+            this.life -= 1;
+        }
+ 
+        // 绘制粒子的方法
+        draw() {
+            ctx.fillStyle = this.color + ', ' + (this.life / 100) + ')';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+ 
+    // 动画函数
+    function animate() {
+        // 绘制背景
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+ 
+        // 以5%的概率添加新烟花
+        if (Math.random() < 0.05) {
+            const x = random(0, canvas.width);
+            const y = canvas.height;
+            const fireworkColor = 'hsla(' + random(0, 360) + ', 100%, 50%';
+            fireworks.push(new Firework(x, y, fireworkColor));
+        }
+ 
+        // 更新和绘制烟花
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+            fireworks[i].update();
+            fireworks[i].draw();
+            if (fireworks[i].exploded && fireworks[i].particles.length === 0) {
+                fireworks.splice(i, 1);
+            }
+        }
+ 
+        // 显示文字
+        ctx.font = "50px Arial";
+        ctx.fillStyle = "pink";
+        ctx.textAlign = "center";
+        ctx.fillText("2024年龙年快乐", canvas.width / 2, canvas.height / 2);
+ 
+        // 继续下一帧动画
+        requestAnimationFrame(animate);
+    }
+ 
+    // 启动动画
+    animate();
+ 
+    // 监听窗口大小变化，重新设置画布大小
+    window.addEventListener('resize', function() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+ 
+</script>
+</body>
+</html>
